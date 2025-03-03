@@ -1,3 +1,12 @@
+---
+title: "Lab4"
+author: "Aiden Roach" 
+date: today
+embed-resources: true
+code-tools: true
+echo: true
+---
+
 # Part 1: Setup
 
 ## GitHub Workflow
@@ -38,7 +47,8 @@ In the code chunk below, load in the packages necessary for your analysis. You s
 
 ```{r}
 #| label: setup
-
+library(tidyverse)
+library(janitor)
 ```
 
 # Part 2: Data Context
@@ -68,7 +78,8 @@ When you read in the data give it an appropriate name for what the data represen
 
 ```{r}
 #| label: load-data
-
+#| eval: FALSE
+mbari <- read_table("data-raw/buoy_2024.txt")
 ```
 
 Notice that the data is all read in as a character value and the first row contains information that is not data, but additional information about the variables: this is called a "comment" in the data.  
@@ -78,7 +89,8 @@ In your data, you will notice the `#` in front of `yr` in the second row. That i
 
 ```{r}
 #| label: load-data-comment
-
+#| eval: FALSE
+mbari <- read_table("data-raw/buoy_2024.txt", comment = "#")
 ```
 
 
@@ -87,7 +99,9 @@ We want to use snake_case for our variable names. Use the `janitor` package to c
 
 ```{r}
 #| label: clean-names
-
+#| eval: FALSE
+mbari <- mbari |>
+  janitor::clean_names()
 ```
 
 ## Step 4: Write the Data Part 1
@@ -97,7 +111,8 @@ Write the data to a `csv` file called `buoy_update.csv`. Be sure to write it to 
 
 ```{r}
 #| label: write-data-part-1
-
+#| eval: FALSE
+write_csv(mbari, "data-raw/buoy_update.csv")
 ```
 
 
@@ -112,7 +127,8 @@ Remember that now we are reading back in a data file of type `csv`. Now when you
 
 ```{r}
 #| label: load-data-again
-
+#| eval: FALSE
+mbari_clean <- read_csv("data-raw/buoy_update.csv", col_type = list(.default = col_character()), na = c("99", "999"))
 ```
 
 This is great! But we created another problem. Now all of our numeric values are being treated like characters and we don't want that. There are a couple of ways to fix this. We can write and reread in the data setting the column types to `double` or we can use the `readr` parsing functions. 
@@ -121,8 +137,11 @@ Here is the code you can use to fix the data without exporting and importing aga
 
 ```{r}
 #| label: parse-double
-buoy_final <- your_file_name |> 
-  mutate(across(.cols = everything(), ~parse_double(.x)))
+#| eval: FALSE
+buoy_final <- mbari_clean |> 
+  mutate(across(.cols = everything(), ~parse_double(.x)))     
+
+write_csv(buoy_final, "data-clean/buoy_final.csv")
 ```
 
 
@@ -135,8 +154,18 @@ Now that are data is "analytic ready", go ahead and read in your clean data and 
 
 ```{r}
 #| label: monterey-air-temp-viz
+mbari_final <- read_csv("data-clean/buoy_final.csv")
 
-
+ggplot(mbari_final, aes(x = mm, y = atmp, color = factor(mm))) + 
+  geom_point(alpha = 0.2) + 
+  geom_jitter(alpha = 0.2, width = 0.20) + 
+  geom_smooth(method = NULL, aes(x = mm, y = atmp), color = "black", linetype = "solid") + 
+  theme_bw() +
+  theme(legend.position = "none") +
+  scale_color_viridis_d() + 
+  labs(title = "Monterey Bay Caynon Air Temperature in 2024",
+         x = "Month in 2024",
+         y = "Air Temperature (Celsius")
 ```
 
 # Part 4: Find a Data Set
@@ -152,7 +181,9 @@ One fun source for data is [Tidy Tuesday](https://github.com/rfordatascience/tid
 
 **For your found data write a brief description of the data and and provide its source.**
 
->Insert your description and link to your source here. Identify 2-3 research questions you could try to answer with this data.  
+https://open.canada.ca/data/dataset/418c81fa-60bd-4063-a526-050c4032ecd1
+
+> This dataset is from Prince Albert National Park in Canada and looks at mammal diversity by using snow tracks in the winter. The dataset was originally published in 2017 but was modified in January of 2025. Some questions that could be answered are how has mammal diversity changed over time, changed with temperature, and/ or changed with the time?
 
 
 
